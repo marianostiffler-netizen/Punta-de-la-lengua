@@ -1,6 +1,4 @@
 import { NextResponse } from 'next/server'
-import { searchITunes } from '../../../lib/itunes.js'
-import { rankResults, removeDuplicates } from '../../../lib/ranker.js'
 
 export async function POST(request) {
   const startTime = Date.now()
@@ -133,6 +131,161 @@ async function searchITunesDirect(query) {
     console.error('❌ Error en iTunes API:', error.message)
     return []
   }
+}
+
+/**
+ * Elimina duplicados de resultados
+ */
+function removeDuplicates(results) {
+  const seen = new Set()
+  
+  return results.filter(song => {
+    // Crear identificador único más robusto
+    const titleNormalized = song.title
+      .toLowerCase()
+      .replace(/[^\w\s]/g, '') // Remover puntuación
+      .trim()
+    
+    const artistNormalized = song.artist
+      .toLowerCase()
+      .replace(/[^\w\s]/g, '')
+      .trim()
+    
+    const key = `${titleNormalized}_${artistNormalized}` 
+    
+    if (seen.has(key)) {
+      console.log(`  ⏭️  Duplicado ignorado: "${song.title}" - ${song.artist}`)
+      return false
+    }
+    
+    seen.add(key)
+    return true
+  })
+}
+
+/**
+ * Rankea los resultados de búsqueda usando múltiples factores
+ */
+function rankResults(results, analysis = {}) {
+  if (!results || results.length === 0) {
+    return []
+  }
+
+  // Calcular score para cada resultado
+  const scored = results.map(song => {
+    let score = 0
+
+    // 1. Precio del álbum (indicador indirecto de popularidad)
+    if (song.collection_price) {
+      score += Math.min(song.collection_price * 2, 20) // Máximo 20 puntos
+    }
+
+    // 2. Tiene preview (muy importante para la UX)
+    if (song.preview_url) {
+      score += 30 // Bonus importante: 30 puntos
+    }
+
+    // 3. Coincidencia exacta con artista buscado
+    if (analysis.possible_artist && song.artist) {
+      const artistQuery = analysis.possible_artist.toLowerCase()
+      const artistResult = song.artist.toLowerCase()
+      
+      if (artistResult.includes(artistQuery) || artistQuery.includes(artistResult)) {
+        score += 60 // Bonus muy alto: 60 puntos
+      }
+    }
+
+    // 4. Coincidencia con keywords en título
+    if (analysis.keywords && analysis.keywords.length > 0) {
+      const titleLower = song.title.toLowerCase()
+      const albumLower = (song.album || '').toLowerCase()
+      
+      analysis.keywords.forEach(keyword => {
+        const kw = keyword.toLowerCase()
+        // Coincidencia en título (peso alto)
+        if (titleLower.includes(kw)) {
+          score += 25
+        }
+        // Coincidencia en álbum (peso menor)
+        if (albumLower.includes(kw)) {
+          score += 10
+        }
+      })
+    }
+
+    // 5. Coincidencia de género
+    if (analysis.genre && song.genre) {
+      const genreMatch = song.genre.toLowerCase()
+        .includes(analysis.genre.toLowerCase())
+      if (genreMatch) {
+        score += 25 // Bonus: 25 puntos
+      }
+    }
+
+    // 6. Fecha de lanzamiento (recencia)
+    if (song.release_date) {
+      const releaseYear = new Date(song.release_date).getFullYear()
+      const currentYear = new Date().getFullYear()
+      const yearsAgo = currentYear - releaseYear
+
+      // Si se especificó una época
+      if (analysis.era) {
+        const targetDecade = parseInt(analysis.era.replace(/s$/, ''))
+        const songDecade = Math.floor(releaseYear / 10) * 10
+        
+        if (songDecade === targetDecade) {
+          score += 40 // Bonus alto por década correcta
+        } else {
+          // Penalizar si está muy lejos de la década buscada
+          const decadeDiff = Math.abs(songDecade - targetDecade) / 10
+          score -= decadeDiff * 10
+        }
+      } else {
+        // Sin época especificada: preferir canciones más recientes
+        if (yearsAgo <= 2) {
+          score += 20 // Muy reciente
+        } else if (yearsAgo <= 5) {
+          score += 15 // Reciente
+        } else if (yearsAgo <= 10) {
+          score += 10 // Medio reciente
+        }
+      }
+    }
+
+    // 7. Bonus por estar en posiciones bajas del álbum
+    if (song.track_number && song.track_number <= 3) {
+      score += 5
+    }
+
+    // 8. Coincidencia de idioma (si es relevante)
+    if (analysis.language === 'es') {
+      const latinArtists = ['shakira', 'maluma', 'ozuna', 'bad bunny', 
+                           'karol g', 'j balvin', 'soda stereo', 
+                           'cerati', 'chayanne', 'juanes']
+      
+      const artistLower = song.artist.toLowerCase()
+      const isLatin = latinArtists.some(la => artistLower.includes(la))
+      
+      if (isLatin) {
+        score += 15
+      }
+    }
+
+    return {
+      ...song,
+      final_score: Math.round(score)
+    }
+  })
+
+  // Ordenar por score descendente
+  scored.sort((a, b) => b.final_score - a.final_score)
+
+  console.log('🏆 Top 5 resultados:')
+  scored.slice(0, 5).forEach((song, i) => {
+    console.log(`  ${i + 1}. "${song.title}" - ${song.artist} (score: ${song.final_score})`)
+  })
+
+  return scored
 }
 
 /**
