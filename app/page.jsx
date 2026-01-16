@@ -18,13 +18,16 @@ export default function Home() {
     try {
       console.log('Searching directly from frontend for:', query.trim())
       
-      // Llamada directa a iTunes API desde el frontend
-      const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(query.trim())}&media=music&entity=song&limit=10&lang=es_us`
+      // Llamada directa a iTunes API con encoding correcto
+      const cleanQuery = encodeURIComponent(query.trim())
+      const searchUrl = `https://itunes.apple.com/search?term=${cleanQuery}&media=music&entity=song&limit=10&lang=es_us`
+      
+      console.log('Calling iTunes API:', searchUrl)
       
       const response = await fetch(searchUrl)
       
       if (!response.ok) {
-        console.error('iTunes API error:', response.status)
+        console.error('iTunes API error:', response.status, response.statusText)
         setError(`Error de iTunes: ${response.status}`)
         return
       }
@@ -33,6 +36,7 @@ export default function Home() {
       console.log('iTunes response:', data)
       
       if (!data.results || !Array.isArray(data.results)) {
+        console.log('No results found in iTunes response')
         setError('No se encontraron canciones')
         return
       }
@@ -53,7 +57,7 @@ export default function Home() {
         youtube_url: `https://www.youtube.com/results?search_query=${encodeURIComponent(`${item.trackName || ''} ${item.artistName || ''}`)}`
       }))
       
-      console.log('Processed results:', results.length)
+      console.log('Successfully processed results:', results.length)
       setResults(results)
       
     } catch (err) {
