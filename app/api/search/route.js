@@ -1,11 +1,9 @@
-import { NextResponse } from 'next/server'
-
 export async function POST(request) {
   try {
     const { query } = await request.json()
     
     if (!query || typeof query !== 'string' || query.trim().length === 0) {
-      return NextResponse.json({
+      return Response.json({
         success: false,
         error: 'Query is required and must be a non-empty string'
       }, { status: 400 })
@@ -13,7 +11,7 @@ export async function POST(request) {
 
     console.log('Search request received for query:', query)
 
-    // Simple iTunes API call - no external dependencies
+    // Simple iTunes API call
     const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(query.trim())}&media=music&entity=song&limit=50&lang=es_us`
     
     console.log('Calling iTunes API:', searchUrl)
@@ -22,7 +20,7 @@ export async function POST(request) {
     
     if (!response.ok) {
       console.error('iTunes API error:', response.status, response.statusText)
-      return NextResponse.json({
+      return Response.json({
         success: false,
         error: `iTunes API error: ${response.status} ${response.statusText}`
       }, { status: 500 })
@@ -33,7 +31,7 @@ export async function POST(request) {
     
     if (!data.results || !Array.isArray(data.results)) {
       console.log('No results found in iTunes response')
-      return NextResponse.json({
+      return Response.json({
         success: true,
         results: [],
         query: query,
@@ -58,7 +56,7 @@ export async function POST(request) {
 
     console.log('Successfully processed results:', results.length, 'songs')
 
-    return NextResponse.json({
+    return Response.json({
       success: true,
       results: results,
       query: query,
@@ -67,7 +65,7 @@ export async function POST(request) {
     
   } catch (error) {
     console.error('Search error:', error)
-    return NextResponse.json({
+    return Response.json({
       success: false,
       error: `Internal server error: ${error.message}`
     }, { status: 500 })
