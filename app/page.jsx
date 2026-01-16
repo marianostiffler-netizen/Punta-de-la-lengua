@@ -18,7 +18,7 @@ export default function Home() {
     try {
       console.log('Searching directly from frontend for:', query.trim())
       
-      // Llamada directa a iTunes API con encoding correcto
+      // Búsqueda directa a iTunes con encoding correcto
       const cleanQuery = encodeURIComponent(query.trim())
       const searchUrl = `https://itunes.apple.com/search?term=${cleanQuery}&media=music&entity=song&limit=10&lang=es_us`
       
@@ -66,6 +66,11 @@ export default function Home() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const openYouTubeSearch = () => {
+    const searchQuery = encodeURIComponent(query.trim())
+    window.open(`https://www.youtube.com/results?search_query=${searchQuery}`, '_blank')
   }
 
   const setExampleQuery = (example) => {
@@ -122,6 +127,17 @@ export default function Home() {
             ))}
           </div>
         </form>
+
+        {/* Plan B YouTube - SIEMPRE visible */}
+        <div className="mb-6 p-4 bg-yellow-500/20 border-l-4 border-yellow-500 rounded-lg">
+          <p className="text-yellow-200 text-sm mb-2">⚠️ ¿No aparece lo que buscas?</p>
+          <button
+            onClick={openYouTubeSearch}
+            className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-semibold transition text-sm"
+          >
+            🔍 Buscar "{query.trim()}" en YouTube
+          </button>
+        </div>
 
         {/* Error */}
         {error && (
