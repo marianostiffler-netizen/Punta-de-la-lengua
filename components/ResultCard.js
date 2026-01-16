@@ -1,43 +1,38 @@
 export default function ResultCard({ song }) {
   return (
-    <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-6 hover:bg-white/20 transition">
-      <div className="flex gap-4">
+    <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+      <div className="flex gap-3">
         {song.image && (
           <img 
             src={song.image} 
             alt={song.title}
-            className="w-24 h-24 rounded-lg object-cover flex-shrink-0"
+            className="w-16 h-16 rounded object-cover flex-shrink-0"
           />
         )}
         <div className="flex-1 min-w-0">
-          <h3 className="text-xl font-bold text-white truncate">{song.title}</h3>
-          <p className="text-gray-300">{song.artist}</p>
+          <h3 className="text-base font-medium text-gray-900 truncate">{song.title}</h3>
+          <p className="text-sm text-gray-600 truncate">{song.artist}</p>
           {song.album && (
-            <p className="text-sm text-gray-400 mt-1">📀 {song.album}</p>
+            <p className="text-xs text-gray-500 mt-1 truncate">{song.album}</p>
           )}
-          {song.genre && (
-            <p className="text-sm text-purple-300 mt-1">🎵 {song.genre}</p>
-          )}
-          <div className="flex gap-2 mt-2">
+          <div className="flex gap-3 mt-2">
             {song.itunes_url && (
               <a 
                 href={song.itunes_url} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-xs text-blue-300 hover:text-blue-200"
+                className="text-xs text-gray-500 hover:text-gray-700"
               >
-                Ver en iTunes →
+                Ver →
               </a>
+            )}
+            {song.preview_url && (
+              <audio controls className="h-8">
+                <source src={song.preview_url} type="audio/mpeg" />
+              </audio>
             )}
           </div>
         </div>
-        {song.preview_url && (
-          <div className="flex-shrink-0">
-            <audio controls className="w-64 h-10">
-              <source src={song.preview_url} type="audio/mpeg" />
-            </audio>
-          </div>
-        )}
       </div>
     </div>
   )

@@ -36,19 +36,21 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-5xl font-bold text-white text-center mb-2">
-          🎵 Song Finder
-        </h1>
-        <p className="text-gray-300 text-center mb-8">
-          Describe la canción que buscas, nosotros la encontramos
-        </p>
+    <main className="min-h-screen p-6">
+      <div className="max-w-2xl mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-light text-gray-900 mb-2">
+            Song Finder
+          </h1>
+          <p className="text-gray-600 text-sm">
+            Encuentra cualquier canción
+          </p>
+        </div>
         
         <SearchBar onSearch={handleSearch} loading={loading} />
         
         {error && (
-          <div className="mt-4 p-4 bg-red-500/20 border border-red-500/50 rounded-lg text-red-200 text-center">
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm text-center">
             {error}
           </div>
         )}
@@ -57,17 +59,15 @@ export default function Home() {
           {loading ? (
             <LoadingState />
           ) : results.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {results.map((song, idx) => (
                 <ResultCard key={`${song.itunes_id || idx}-${song.title}`} song={song} />
               ))}
             </div>
           ) : !loading && !error ? (
-            <div className="text-center text-gray-400 mt-8">
-              <p className="text-lg">🎵</p>
-              <p className="mt-2">Busca canciones por título, artista, género o época</p>
-              <p className="text-sm mt-2 text-gray-500">
-                Ej: "canción triste de los 80" o "la que dice umbrella ella"
+            <div className="text-center text-gray-400 mt-12">
+              <p className="text-sm">
+                Busca por título, artista o letras
               </p>
             </div>
           ) : null}
