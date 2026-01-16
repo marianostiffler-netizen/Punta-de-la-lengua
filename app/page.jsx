@@ -16,6 +16,8 @@ export default function Home() {
     setResults([])
     
     try {
+      console.log('Sending search request for query:', query.trim())
+      
       const res = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -23,10 +25,12 @@ export default function Home() {
       })
       
       if (!res.ok) {
+        console.error('HTTP error! status:', res.status, 'statusText:', res.statusText)
         throw new Error(`HTTP error! status: ${res.status}`)
       }
       
       const data = await res.json()
+      console.log('API response received:', data)
       
       if (data.success) {
         setResults(data.results || [])
@@ -37,8 +41,8 @@ export default function Home() {
         setError(data.error || 'Error en la búsqueda')
       }
     } catch (err) {
-      console.error('Error:', err)
-      setError(`Error: ${err.message}. Verifica que el servidor esté corriendo.`)
+      console.error('Search error caught:', err)
+      setError(`Error: ${err.message}. Verifica la consola para más detalles.`)
     } finally {
       setLoading(false)
     }

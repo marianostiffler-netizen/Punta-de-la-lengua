@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server'
 
-const ITUNES_API_BASE = 'https://itunes.apple.com/search'
-
 export async function POST(request) {
   try {
     const { query } = await request.json()
@@ -13,26 +11,25 @@ export async function POST(request) {
       }, { status: 400 })
     }
 
-    // Search iTunes directly
-    const params = new URLSearchParams({
-      term: query.trim(),
-      media: 'music',
-      entity: 'song',
-      limit: '50',
-      lang: 'es_us'
-    })
+    console.log('Search request received for query:', query)
 
-    console.log('Searching iTunes with params:', params.toString())
+    // Simple iTunes API call - no external dependencies
+    const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(query.trim())}&media=music&entity=song&limit=50&lang=es_us`
+    
+    console.log('Calling iTunes API:', searchUrl)
 
-    const response = await fetch(`${ITUNES_API_BASE}?${params}`)
+    const response = await fetch(searchUrl)
     
     if (!response.ok) {
       console.error('iTunes API error:', response.status, response.statusText)
-      throw new Error(`iTunes API error: ${response.status}`)
+      return NextResponse.json({
+        success: false,
+        error: `iTunes API error: ${response.status} ${response.statusText}`
+      }, { status: 500 })
     }
 
     const data = await response.json()
-    console.log('iTunes response:', data)
+    console.log('iTunes raw response:', data)
     
     if (!data.results || !Array.isArray(data.results)) {
       console.log('No results found in iTunes response')
@@ -59,7 +56,7 @@ export async function POST(request) {
       popularity: 0
     }))
 
-    console.log('Processed results:', results.length)
+    console.log('Successfully processed results:', results.length, 'songs')
 
     return NextResponse.json({
       success: true,
