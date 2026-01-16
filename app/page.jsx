@@ -36,7 +36,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-black p-8">
+    <main className="min-h-screen p-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-5xl font-bold text-white text-center mb-2">
           🎵 Song Finder
