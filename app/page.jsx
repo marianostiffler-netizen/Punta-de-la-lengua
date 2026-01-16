@@ -16,33 +16,49 @@ export default function Home() {
     setResults([])
     
     try {
-      console.log('Sending search request for query:', query.trim())
+      console.log('Searching directly from frontend for:', query.trim())
       
-      const res = await fetch('/api/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: query.trim() })
-      })
+      // Llamada directa a iTunes API desde el frontend
+      const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(query.trim())}&media=music&entity=song&limit=10&lang=es_us`
       
-      if (!res.ok) {
-        console.error('HTTP error! status:', res.status, 'statusText:', res.statusText)
-        throw new Error(`HTTP error! status: ${res.status}`)
+      const response = await fetch(searchUrl)
+      
+      if (!response.ok) {
+        console.error('iTunes API error:', response.status)
+        setError(`Error de iTunes: ${response.status}`)
+        return
       }
       
-      const data = await res.json()
-      console.log('API response received:', data)
+      const data = await response.json()
+      console.log('iTunes response:', data)
       
-      if (data.success) {
-        setResults(data.results || [])
-        if (data.results.length === 0) {
-          setError('No se encontraron canciones. Intenta con otros términos.')
-        }
-      } else {
-        setError(data.error || 'Error en la búsqueda')
+      if (!data.results || !Array.isArray(data.results)) {
+        setError('No se encontraron canciones')
+        return
       }
+
+      // Transformar resultados a nuestro formato
+      const results = data.results.map(item => ({
+        title: item.trackName || '',
+        artist: item.artistName || '',
+        album: item.collectionName || '',
+        genre: item.primaryGenreName || '',
+        release_date: item.releaseDate || '',
+        image: item.artworkUrl100 || item.artworkUrl60 || '',
+        preview_url: item.previewUrl || '',
+        itunes_url: item.trackViewUrl || '',
+        itunes_id: item.trackId?.toString() || '',
+        apple_music_url: '',
+        popularity: 0,
+        youtube_url: `https://www.youtube.com/results?search_query=${encodeURIComponent(`${item.trackName || ''} ${item.artistName || ''}`)}`
+      }))
+      
+      console.log('Processed results:', results.length)
+      setResults(results)
+      
     } catch (err) {
-      console.error('Search error caught:', err)
-      setError(`Error: ${err.message}. Verifica la consola para más detalles.`)
+      console.error('Search error:', err)
+      setError(`Error: ${err.message}`)
     } finally {
       setLoading(false)
     }
@@ -190,6 +206,16 @@ export default function Home() {
                           className="text-sm text-blue-400 hover:text-blue-300 underline"
                         >
                           🎵 iTunes
+                        </a>
+                      )}
+                      {song.youtube_url && (
+                        <a 
+                          href={song.youtube_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-sm text-red-400 hover:text-red-300 underline"
+                        >
+                          🎺 YouTube
                         </a>
                       )}
                     </div>
