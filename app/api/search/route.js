@@ -22,9 +22,9 @@ export async function POST(request) {
     const analysis = analyzeQuery(query)
     console.log('✅ Análisis completado:', analysis)
 
-    // PASO 2: Buscar en iTunes
+    // PASO 2: Buscar en iTunes directamente
     console.log('🎵 Buscando en iTunes...')
-    const itunesResults = await searchITunes(analysis)
+    const itunesResults = await searchITunesDirect(query)
 
     if (itunesResults.length === 0) {
       console.log('⚠️  No se encontraron resultados')
@@ -75,6 +75,63 @@ export async function POST(request) {
       message: error.message,
       results: []
     }, { status: 500 })
+  }
+}
+
+/**
+ * Búsqueda directa en iTunes API
+ */
+async function searchITunesDirect(query) {
+  try {
+    const ITUNES_API_BASE = 'https://itunes.apple.com/search'
+    
+    // Parámetros de búsqueda
+    const params = new URLSearchParams({
+      term: query,
+      media: 'music',
+      entity: 'song',
+      limit: 25,
+      country: 'US',
+      lang: 'es_es'
+    })
+
+    // Hacer request a iTunes API
+    const response = await fetch(`${ITUNES_API_BASE}?${params}`)
+    const data = await response.json()
+
+    const results = data.results
+
+    if (!results || results.length === 0) {
+      console.log('❌ No se encontraron resultados en iTunes')
+      return []
+    }
+
+    // Formatear resultados
+    const songs = results.map(track => ({
+      title: track.trackName,
+      artist: track.artistName,
+      album: track.collectionName,
+      itunes_id: track.trackId,
+      itunes_url: track.trackViewUrl,
+      image: track.artworkUrl100,
+      preview_url: track.previewUrl,
+      genre: track.primaryGenreName,
+      release_date: track.releaseDate,
+      duration_ms: track.trackTimeMillis,
+      price: track.trackPrice,
+      currency: track.currency,
+      explicit: track.trackExplicitness === 'explicit',
+      collection_price: track.collectionPrice || 0,
+      track_number: track.trackNumber || 0,
+      source: 'itunes'
+    }))
+
+    console.log(`✅ Encontradas ${songs.length} canciones en iTunes`)
+    return songs
+
+  } catch (error) {
+    console.error('❌ Error en iTunes API:', error.message)
+    return []
   }
 }
 
