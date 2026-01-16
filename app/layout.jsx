@@ -1,14 +1,14 @@
 import './globals.css'
 
 export const metadata = {
-  title: 'Song Finder',
-  description: 'Busca canciones fácilmente',
+  title: 'Song Finder - Encuentra cualquier canción',
+  description: 'Busca canciones por letras, artista, género o época usando IA',
 }
 
 export default function RootLayout({ children }) {
   return (
     <html lang="es">
-      <body className="min-h-screen bg-gray-50">
+      <body className="antialiased">
         {children}
       </body>
     </html>
